@@ -1,0 +1,9 @@
+.vs/
+SpotiDown-MusiDown/bin/
+SpotiDown-MusiDown/obj/
+*.suo
+*.user
+_ReSharper.*
+bin
+obj
+packages
