@@ -7,7 +7,7 @@ namespace SpotiDown_MusiDown.Helpers;
 
 public class FFmpegDownloader
 {
-    private static async Task<FFmpegDownload> Info() => 
+    private static async Task<FFmpegDownload> GetInfoAsync() => 
         JsonSerializer.Deserialize<FFmpegDownload>(await Local.Client.GetStringAsync("https://ffbinaries.com/api/v1/version/latest"))!;
 
     public static OsType GetOs()
@@ -38,7 +38,7 @@ public class FFmpegDownloader
                     return OsType.linux_arm64;
             }
         }
-        throw new Exception("Unsupported Server.", new("Server is running on an OS wich is not supported"));
+        throw new Exception("Unsupported Host OS.", new("Server is running on an OS wich is not supported by FFmpeg."));
     }
 
     public static async Task<string> GetUrl(OsType OperatingSystem)
@@ -46,25 +46,25 @@ public class FFmpegDownloader
         switch (OperatingSystem)
         {
             case OsType.windows_32:
-                return (await Info()).bin.windows_32.ffmpeg!;
+                return (await GetInfoAsync()).bin.windows_32.ffmpeg!;
             case OsType.windows_64:
-                return (await Info()).bin.windows_64.ffmpeg!;
+                return (await GetInfoAsync()).bin.windows_64.ffmpeg!;
             case OsType.linux_32:
-                return (await Info()).bin.linux_32.ffmpeg!;
+                return (await GetInfoAsync()).bin.linux_32.ffmpeg!;
             case OsType.linux_64:
-                return (await Info()).bin.linux_64.ffmpeg!;
+                return (await GetInfoAsync()).bin.linux_64.ffmpeg!;
             case OsType.linux_armhf:
-                return (await Info()).bin.linux_armhf.ffmpeg!;
+                return (await GetInfoAsync()).bin.linux_armhf.ffmpeg!;
             case OsType.linux_arm64:
-                return (await Info()).bin.linux_arm64.ffmpeg!;
+                return (await GetInfoAsync()).bin.linux_arm64.ffmpeg!;
             case OsType.osx_64:
-                return (await Info()).bin.osx_64.ffmpeg!;
+                return (await GetInfoAsync()).bin.osx_64.ffmpeg!;
             default: 
-                throw new Exception("Unsupported Server.", new("Server is running on an OS wich is not supported"));
+                throw new Exception("Unsupported Host OS.", new("Server is running on an OS wich is not supported by FFmpeg."));
         }
     }
 
-    public static async Task DownloadLatest()
+    public static async Task LatestAsync()
     {
         using (FileStream fs = new(Local.GetPath("FFMPEG"), FileMode.CreateNew))
         using (ZipArchive ar = new(new MemoryStream(await Local.Client.GetByteArrayAsync(await GetUrl(GetOs())))))

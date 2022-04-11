@@ -33,7 +33,7 @@ public static class Local
     public static string GetPath(string Relative) =>
         Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!, Relative);
 
-    public async static Task<byte[]> StreamToBytes(Stream Stream)
+    public async static Task<byte[]> ToBytesAsync(Stream Stream)
     {
         using (MemoryStream ms = new()) 
         {
@@ -42,10 +42,10 @@ public static class Local
         }
     }
 
-    public async static Task<byte[]> RunFFmpeg(Stream Stream, string Arguments, CancellationToken cancellationToken)
+    public async static Task<Stream> RunFFmpegAsync(Stream Stream, string Arguments, CancellationToken cancellationToken)
     {
         if (!File.Exists(GetPath("FFMPEG")))
-            await FFmpegDownloader.DownloadLatest();
+            await FFmpegDownloader.LatestAsync();
 
         MemoryStream Result = new();
         var FFMPEG = new Process
@@ -80,6 +80,7 @@ public static class Local
         await Task.WhenAll(inputTask, outputTask);
         await FFMPEG.WaitForExitAsync(cancellationToken);
 
-        return await StreamToBytes(Result);
+        return Result;
     }
+
 }
