@@ -39,13 +39,13 @@ public static class Youtube
         {
             case 0:
                 var Video = await Client.Videos.GetAsync(Query, CancellationToken);
-                return new[] { new Song(Video.Id, Video.Title, Video.Author.Title, Video.UploadDate.Year, Video.Thumbnails[0].Url, await GetThumbnailAsync(Video.Id), 0, false, true, false) };
+                return new[] { new Song(Video.Id, Video.Title, Video.Author.Title, Video.UploadDate.Year, Video.Thumbnails[0].Url, await GetThumbnailAsync(Video.Id), 0, false, true, true) };
             case 1:
-                return await Task.WhenAll((await Client.Playlists.GetVideosAsync(Query, CancellationToken).CollectAsync(ResultCount)).Select(async Video => new Song(Video.Id, Video.Title, Video.Author.Title, DateTime.Now.Year, Video.Thumbnails[0].Url, await GetThumbnailAsync(Video.Id), 0, false, true, false)));
+                return await Task.WhenAll((await Client.Playlists.GetVideosAsync(Query, CancellationToken).CollectAsync(ResultCount)).Select(async Video => new Song(Video.Id, Video.Title, Video.Author.Title, DateTime.Now.Year, Video.Thumbnails[0].Url, await GetThumbnailAsync(Video.Id), 0, false, true, true)));
             case 2:
-                return await Task.WhenAll((await Client.Channels.GetUploadsAsync(Query, CancellationToken).CollectAsync(ResultCount)).Select(async Video => new Song(Video.Id, Video.Title, Video.Author.Title, DateTime.Now.Year, Video.Thumbnails[0].Url, await GetThumbnailAsync(Video.Id), 0, false, true, false)));
+                return await Task.WhenAll((await Client.Channels.GetUploadsAsync(Query, CancellationToken).CollectAsync(ResultCount)).Select(async Video => new Song(Video.Id, Video.Title, Video.Author.Title, DateTime.Now.Year, Video.Thumbnails[0].Url, await GetThumbnailAsync(Video.Id), 0, false, true, true)));
             default:
-                return await Task.WhenAll((await Client.Search.GetVideosAsync(Query, CancellationToken).CollectAsync(ResultCount)).Select(async Video => new Song(Video.Id, Video.Title, Video.Author.Title, DateTime.Now.Year, Video.Thumbnails[0].Url, await GetThumbnailAsync(Video.Id), 0, false, true, false)));
+                return await Task.WhenAll((await Client.Search.GetVideosAsync(Query, CancellationToken).CollectAsync(ResultCount)).Select(async Video => new Song(Video.Id, Video.Title, Video.Author.Title, DateTime.Now.Year, Video.Thumbnails[0].Url, await GetThumbnailAsync(Video.Id), 0, false, true, true)));
         }
     }
 
