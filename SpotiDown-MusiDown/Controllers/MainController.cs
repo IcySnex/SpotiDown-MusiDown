@@ -7,6 +7,7 @@ namespace SpotiDown_MusiDown.Controllers;
 [ApiController]
 public class MainController : ControllerBase
 {
+
     [Route("api")]
     [HttpGet]
     public BotPackage[] Info() =>

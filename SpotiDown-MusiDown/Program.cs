@@ -7,7 +7,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(opt => opt.JsonSerializerOptions.PropertyNamingPolicy = null);
 
 var app = builder.Build();
-//app.UseMiddleware<ErrorHandler>();
+app.UseMiddleware<ErrorHandler>();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();

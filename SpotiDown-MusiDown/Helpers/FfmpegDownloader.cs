@@ -7,8 +7,8 @@ namespace SpotiDown_MusiDown.Helpers;
 
 public class FFmpegDownloader
 {
-    private static async Task<FFmpegDownload> GetInfoAsync() => 
-        JsonSerializer.Deserialize<FFmpegDownload>(await Local.Client.GetStringAsync("https://ffbinaries.com/api/v1/version/latest"))!;
+    private static async Task<FFmpegDownload> GetInfoAsync(CancellationToken cancellationToken = default) => 
+        JsonSerializer.Deserialize<FFmpegDownload>(await Local.Client.GetStringAsync("https://ffbinaries.com/api/v1/version/latest", cancellationToken))!;
 
     public static OsType GetOs()
     {
@@ -41,34 +41,35 @@ public class FFmpegDownloader
         throw new Exception("Unsupported Host OS.", new("Server is running on an OS wich is not supported by FFmpeg."));
     }
 
-    public static async Task<string> GetUrl(OsType OperatingSystem)
+    public static async Task<string> GetUrl(OsType OperatingSystem, CancellationToken cancellationToken = default)
     {
+        var Info = await GetInfoAsync(cancellationToken);
         switch (OperatingSystem)
         {
             case OsType.windows_32:
-                return (await GetInfoAsync()).bin.windows_32.ffmpeg!;
+                return Info.bin.windows_32.ffmpeg;
             case OsType.windows_64:
-                return (await GetInfoAsync()).bin.windows_64.ffmpeg!;
+                return Info.bin.windows_64.ffmpeg;
             case OsType.linux_32:
-                return (await GetInfoAsync()).bin.linux_32.ffmpeg!;
+                return Info.bin.linux_32.ffmpeg;
             case OsType.linux_64:
-                return (await GetInfoAsync()).bin.linux_64.ffmpeg!;
+                return Info.bin.linux_64.ffmpeg;
             case OsType.linux_armhf:
-                return (await GetInfoAsync()).bin.linux_armhf.ffmpeg!;
+                return Info.bin.linux_armhf.ffmpeg;
             case OsType.linux_arm64:
-                return (await GetInfoAsync()).bin.linux_arm64.ffmpeg!;
+                return Info.bin.linux_arm64.ffmpeg;
             case OsType.osx_64:
-                return (await GetInfoAsync()).bin.osx_64.ffmpeg!;
+                return Info.bin.osx_64.ffmpeg;
             default: 
                 throw new Exception("Unsupported Host OS.", new("Server is running on an OS wich is not supported by FFmpeg."));
         }
     }
 
-    public static async Task LatestAsync()
+    public static async Task LatestAsync(CancellationToken cancellationToken = default)
     {
         using (FileStream fs = new(Local.GetPath("FFMPEG"), FileMode.CreateNew))
-        using (ZipArchive ar = new(new MemoryStream(await Local.Client.GetByteArrayAsync(await GetUrl(GetOs())))))
-            await ar.Entries.Where(z => z.Name.ToLower().Contains("ffmpeg")).First().Open().CopyToAsync(fs);
+        using (ZipArchive ar = new(new MemoryStream(await Local.Client.GetByteArrayAsync(await GetUrl(GetOs()), cancellationToken))))
+            await ar.Entries.Where(z => z.Name.ToLower().Contains("ffmpeg")).First().Open().CopyToAsync(fs, cancellationToken);
     }
 }
 

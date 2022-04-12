@@ -3,7 +3,6 @@ using SpotiDown_MusiDown.Models;
 using SpotiDown_MusiDown.Helpers;
 using System.Text.RegularExpressions;
 using System.Text.Json;
-using System.Net.Http.Headers;
 
 namespace SpotiDown_MusiDown.Controllers;
 
@@ -22,16 +21,16 @@ public class YoutubeController : ControllerBase
         if (string.IsNullOrWhiteSpace(q) || page < 0)
             return Error.BadRequest;
 
-        var result = await Youtube.SearchAsync(q, (page + 1) * 10, cancellationToken);
+        var result = await Youtube.SearchAsync(q, ((page + 1) * 10) + 1, cancellationToken);
         if (result is null || result.Length < 1)
             return Error.NoContent;
 
-        return Ok(new SearchResponse(result.Skip(Math.Max(0, result.Length - 10)).ToList(), true, "page++"));
+        return Ok(new SearchResponse(result.Skip(page * 10).Take(10), result.Length > (page + 1) * 10, "page++"));
     }
 
     [Route("youtube/api/download")]
     [HttpGet]
-    public async Task<IActionResult> DownloadAsync(CancellationToken cancellationToken, string id, int quality = 160, string? optional = null)
+    public async Task<IActionResult> DownloadAsync(CancellationToken cancellationToken, string id, int quality = 128, string? optional = null)
     {
         if (string.IsNullOrWhiteSpace(id))
             return Error.BadRequest;
@@ -42,14 +41,13 @@ public class YoutubeController : ControllerBase
         if (stream is null || stream.Length < 1)
             return Error.NoContent;
 
-        return File(await Local.RunFFmpegAsync(stream, $"-i - -f mp3 -b:a {quality}k -", cancellationToken), "application/octet-stream", $"{id}.mp3");
+        return File(await Local.GetSongAsync(id, stream, quality, false, cancellationToken), "application/octet-stream", $"{id}.mp3");
     }
 
     [Route("youtube/api/preview")]
     [HttpGet]
-    public async Task PreviewAsync(CancellationToken cancellationToken, string id, string? optional = null)
+    public async Task PreviewAsync(CancellationToken cancellationToken, string id, int quality = 128, string? optional = null)
     {
-        // Check if id is invalid and throw bad request if so.
         if (string.IsNullOrWhiteSpace(id))
         {
             Response.StatusCode = 400;
@@ -57,7 +55,6 @@ public class YoutubeController : ControllerBase
             return;
         }
 
-        // Load Song stream and check if null or empty and throw no content if so.
         Stream stream = await Youtube.GetStreamAsync(id, 64, cancellationToken);
         if (stream is null || stream.Length < 1)
         {
@@ -66,45 +63,37 @@ public class YoutubeController : ControllerBase
             return;
         }
 
-        // Check headers for "Range" key and throw bad request if not found.
         if (!Request.Headers.ContainsKey("Range"))
         {
             Response.StatusCode = 400;
             await Response.WriteAsync(JsonSerializer.Serialize(new Error(400, "Bad Request.", "Please verify your request.")));
             return;
         }
-        // Format range into match so we can work with it.
-        var reg = new Regex(@"seconds ([0-9]+)\-([0-9]*)");
-        var match = reg.Match(Request.Headers["Range"].First());
+        var match = new Regex(@"bytes=([0-9]+)\-([0-9]*)").Match(Request.Headers["Range"].First());
 
-        // Get video duration.
-        var dur = await Youtube.GetDurationAsync(id, cancellationToken);
-        // Set start and end position by range header.
-        int start = int.Parse(match.Groups[1].Value);
-        int end = int.Parse(match.Groups[2].Value);
+        var PreviewSong = await Local.GetSongAsync(id, stream, quality, true, cancellationToken);
 
-        // Check if end position is greater than total duration and modify if needed.
-        if (end > dur.TotalSeconds)
-            end = (int)dur.TotalSeconds;
-        // Check if start position is greater than end position and subtract 10 as long as it is.
-        while (start >= end)
-            start -= 10;
-        // Check if start position is less than 0 and modify if needed.
-        if (start < 0)
+        int start;
+        int end;
+        if (!int.TryParse(match.Groups[1].Value, out start))
             start = 0;
+        if (!int.TryParse(match.Groups[2].Value, out end))
+            end = start + 30000;
+        if (end > PreviewSong.Length)
+            end = (int)PreviewSong.Length;
+        if (start > end)
+            start = end - 30000;
 
-        // Download song stream and trim it by seconds given in header.
-        var PreviewSong = await Local.RunFFmpegAsync(stream, $"-ss {start} -to {end} -i - -f mp3 -b:a 64k -", cancellationToken);
-
-        // Format response headers and return song.
         Response.StatusCode = 206;
-        Response.ContentLength = PreviewSong.Length;
+        Response.ContentLength = PreviewSong.Length - PreviewSong.Position;
         Response.ContentType = "application/octet-stream";
-        Response.Headers.Add("Content-Range", $"seconds {start}-{end}/*");
-        Response.Headers.Add("Accept-Ranges", "seconds");
+        Response.Headers.Add("Content-Range", $"bytes {start}-{end}/{PreviewSong.Length}");
+        Response.Headers.Add("Accept-Ranges", "bytes");
         Response.Headers.Add("Content-Disposition", $"attachment; filename=Preview-{id}.mp3");
+
+        PreviewSong.Seek(start, SeekOrigin.Begin);
+        PreviewSong.SetLength(end);
         await PreviewSong.CopyToAsync(Response.Body, cancellationToken);
         return;
     }
-
 }

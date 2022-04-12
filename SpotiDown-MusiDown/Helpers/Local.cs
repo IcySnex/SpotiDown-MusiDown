@@ -29,6 +29,10 @@ public static class Local
         "", "", "");
 
     public static HttpClient Client = new();
+    public static Timer TempTimer = new(s => {
+        Directory.Delete(GetPath("Temp\\"), true);
+        Directory.CreateDirectory(GetPath("Temp\\"));
+    }, null, 0, 3600000);
 
     public static string GetPath(string Relative) =>
         Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!, Relative);
@@ -42,7 +46,7 @@ public static class Local
         }
     }
 
-    public async static Task<Stream> RunFFmpegAsync(Stream Stream, string Arguments, CancellationToken cancellationToken)
+    public async static Task<MemoryStream> RunFFmpegAsync(Stream Stream, string Arguments, CancellationToken cancellationToken = default)
     {
         if (!File.Exists(GetPath("FFMPEG")))
             await FFmpegDownloader.LatestAsync();
@@ -83,4 +87,22 @@ public static class Local
         return Result;
     }
 
+    public async static Task<MemoryStream> GetSongAsync(string Id, Stream Stream, int Quality, bool SaveToTemp = true, CancellationToken cancellationToken = default)
+    {
+
+        if (File.Exists(GetPath($"Temp\\{Id}.mp3")))
+        {
+            MemoryStream Result = new();
+            using (var fs = new FileStream(GetPath($"Temp\\{Id}.mp3"), FileMode.Open))
+                await fs.CopyToAsync(Result);
+            Result.Seek(0, SeekOrigin.Begin);
+            return Result;
+        }
+
+        var Convert = await RunFFmpegAsync(Stream, $"-i - -f mp3 -b:a {Quality}k -", cancellationToken);
+        if (SaveToTemp)
+            using (var fs = new FileStream(GetPath($"Temp\\{Id}.mp3"), FileMode.Create))
+                await Convert.CopyToAsync(fs);
+        return Convert;
+    }
 }
