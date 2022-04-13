@@ -6,6 +6,7 @@ namespace SpotiDown_MusiDown.Helpers;
 
 public static class Local
 {
+
     public static BotPackage YoutubePackage { get; set; } = new(
         "com.icysnex.spotidown.youtube",
         "SpotiDown-Youtube",
@@ -29,10 +30,16 @@ public static class Local
         "", "", "");
 
     public static HttpClient Client = new();
-    public static Timer TempTimer = new(s => {
-        Directory.Delete(GetPath("Temp\\"), true);
+    public static Timer TempTimer = GetTimer();
+
+    public static Timer GetTimer()
+    {
         Directory.CreateDirectory(GetPath("Temp\\"));
-    }, null, 0, 3600000);
+        return new(s => {
+            Directory.Delete(GetPath("Temp\\"), true);
+            Directory.CreateDirectory(GetPath("Temp\\"));
+        }, null, 0, 3600000);
+    }
 
     public static string GetPath(string Relative) =>
         Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!, Relative);
