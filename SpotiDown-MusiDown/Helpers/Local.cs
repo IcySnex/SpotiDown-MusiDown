@@ -13,7 +13,7 @@ public static class Local
         "SpotiDown-Youtube",
         "0.1",
         "Bot used to directly download Youtube songs.",
-        "http://spotidown-musidown.cf/youtube/api",
+        "https://spotidown-musidown.herokuapp.com/youtube/api",
         "search",
         "download",
         "preview",
@@ -43,7 +43,7 @@ public static class Local
     }
 
     public static string GetPath(string Relative) =>
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!, Relative) : $"/app/{Relative}";
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? $"{Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)}\\{Relative.Replace("/", "\\")}" : $"/app/{Relative}";
 
     public async static Task<byte[]> ToBytesAsync(Stream Stream)
     {
@@ -58,7 +58,8 @@ public static class Local
     {
         if (!File.Exists(GetPath("FFMPEG")))
             await FFmpegDownloader.LatestAsync();
-        Exec($"chmod +x {GetPath("FFMPEG")}");
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            await Exec($"chmod +x {GetPath("FFMPEG")}");
 
         MemoryStream Result = new();
         var FFMPEG = new Process
@@ -115,22 +116,21 @@ public static class Local
         return Convert;
     }
 
-    public static void Exec(string cmd)
+    public static async Task Exec(string cmd)
     {
-        using var process = new Process
+        using var Proc = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden,
                 FileName = "/bin/bash",
                 Arguments = $"-c \"{cmd}\""
             }
         };
 
-        process.Start();
-        process.WaitForExit();
+        Proc.Start();
+        await Proc.WaitForExitAsync();
     }
 }
