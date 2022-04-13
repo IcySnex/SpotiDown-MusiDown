@@ -64,7 +64,7 @@ public static class Local
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? $"./{GetPath("FFMPEG")}" : GetPath("FFMPEG"),
+                FileName = GetPath("FFMPEG"),
                 Arguments = Arguments,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
