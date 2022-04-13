@@ -85,7 +85,7 @@ public class YoutubeController : ControllerBase
             start = end - 30000;
 
         Response.StatusCode = 206;
-        Response.ContentLength = PreviewSong.Length - PreviewSong.Position;
+        Response.ContentLength = end - start;
         Response.ContentType = "application/octet-stream";
         Response.Headers.Add("Content-Range", $"bytes {start}-{end}/{PreviewSong.Length}");
         Response.Headers.Add("Accept-Ranges", "bytes");
