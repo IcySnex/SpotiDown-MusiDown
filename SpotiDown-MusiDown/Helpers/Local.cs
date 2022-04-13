@@ -1,6 +1,7 @@
 ﻿using SpotiDown_MusiDown.Models;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace SpotiDown_MusiDown.Helpers;
 
@@ -63,7 +64,7 @@ public static class Local
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = GetPath("FFMPEG"),
+                FileName = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? $"./{GetPath("FFMPEG")}" : GetPath("FFMPEG"),
                 Arguments = Arguments,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
