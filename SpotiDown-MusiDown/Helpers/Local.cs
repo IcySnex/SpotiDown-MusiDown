@@ -11,7 +11,7 @@ public static class Local
         "SpotiDown-Youtube",
         "0.1",
         "Bot used to directly download Youtube songs.",
-        ".../youtube/api",
+        "http://spotidown-musidown.cf/youtube/api",
         "search",
         "download",
         "preview",
