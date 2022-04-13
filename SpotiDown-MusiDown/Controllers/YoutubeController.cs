@@ -25,7 +25,7 @@ public class YoutubeController : ControllerBase
         if (result is null || result.Length < 1)
             return Error.NoContent;
 
-        return Ok(new SearchResponse(result.Skip(page * 10).Take(10), result.Length > (page + 1) * 10, "page++"));
+        return Ok(new SearchResponse(result.Skip(page * 10).Take(10), result.Length > (page + 1) * 10, (page+1).ToString()));
     }
 
     [Route("youtube/api/download")]
