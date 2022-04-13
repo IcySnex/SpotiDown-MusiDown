@@ -58,6 +58,7 @@ public static class Local
     {
         if (!File.Exists(GetPath("FFMPEG")))
             await FFmpegDownloader.LatestAsync();
+        Exec($"chmod +x {GetPath("FFMPEG")}");
 
         MemoryStream Result = new();
         var FFMPEG = new Process
@@ -112,5 +113,24 @@ public static class Local
             using (var fs = new FileStream(GetPath($"Temp/{Id}.mp3"), FileMode.Create))
                 await Convert.CopyToAsync(fs);
         return Convert;
+    }
+
+    public static void Exec(string cmd)
+    {
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                FileName = "/bin/bash",
+                Arguments = $"-c \"{cmd}\""
+            }
+        };
+
+        process.Start();
+        process.WaitForExit();
     }
 }
