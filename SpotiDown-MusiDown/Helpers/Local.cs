@@ -35,15 +35,15 @@ public static class Local
 
     public static Timer GetTimer()
     {
-        Directory.CreateDirectory(GetPath("Temp\\"));
+        Directory.CreateDirectory(GetPath("Temp/"));
         return new(s => {
-            Directory.Delete(GetPath("Temp\\"), true);
-            Directory.CreateDirectory(GetPath("Temp\\"));
+            Directory.Delete(GetPath("Temp/"), true);
+            Directory.CreateDirectory(GetPath("Temp/"));
         }, null, 0, 3600000);
     }
 
     public static string GetPath(string Relative) =>
-        Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!, Relative);
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!, Relative) : $"/app/{Relative}";
 
     public async static Task<byte[]> ToBytesAsync(Stream Stream)
     {
@@ -98,10 +98,10 @@ public static class Local
     public async static Task<MemoryStream> GetSongAsync(string Id, Stream Stream, int Quality, bool SaveToTemp = true, CancellationToken cancellationToken = default)
     {
 
-        if (File.Exists(GetPath($"Temp\\{Id}.mp3")))
+        if (File.Exists(GetPath($"Temp/{Id}.mp3")))
         {
             MemoryStream Result = new();
-            using (var fs = new FileStream(GetPath($"Temp\\{Id}.mp3"), FileMode.Open))
+            using (var fs = new FileStream(GetPath($"Temp/{Id}.mp3"), FileMode.Open))
                 await fs.CopyToAsync(Result);
             Result.Seek(0, SeekOrigin.Begin);
             return Result;
@@ -109,7 +109,7 @@ public static class Local
 
         var Convert = await RunFFmpegAsync(Stream, $"-i - -f mp3 -b:a {Quality}k -", cancellationToken);
         if (SaveToTemp)
-            using (var fs = new FileStream(GetPath($"Temp\\{Id}.mp3"), FileMode.Create))
+            using (var fs = new FileStream(GetPath($"Temp/{Id}.mp3"), FileMode.Create))
                 await Convert.CopyToAsync(fs);
         return Convert;
     }
