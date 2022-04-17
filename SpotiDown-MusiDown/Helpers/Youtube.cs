@@ -9,7 +9,7 @@ namespace SpotiDown_MusiDown.Helpers;
 
 public static class Youtube
 {
-    private static YoutubeClient Client = new();
+    public static YoutubeClient Client = new();
 
     public static int GetSearchType(string Query)
     {

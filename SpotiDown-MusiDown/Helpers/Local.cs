@@ -24,7 +24,7 @@ public static class Local
         "SpotiDown-Spotify",
         "0.1",
         "Bot used to download Spotify songs via Youtube.",
-        ".../youtube/api",
+        "https://spotidown-musidown.herokuapp.com/spotify/api",
         "search",
         "download",
         "preview",
